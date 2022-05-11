@@ -7,6 +7,8 @@ import (
 	"text/tabwriter"
 )
 
+// TabWriter is a thin wrapper around `text/tabwriter` that prints any
+// interface{} value.
 type TabWriter struct {
 	w *tabwriter.Writer
 }

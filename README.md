@@ -22,16 +22,6 @@ by running:
 Each command is designed to be used as a standalone command
 line tool, and be integrated with any Unix toolchain.
 
-## Client ID and Client Secret
-
-You must supply to all commands the Client ID and Client
-Secret to be used when performing API calls.
-
-Obtain these credentials from https://console.developers.google.com/
-
-Credentials are cached per command, so you don't have to
-authenticate after each invocation.
-
 ## youtube
 
 youtube is a command line interface to interact with your

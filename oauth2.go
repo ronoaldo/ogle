@@ -22,6 +22,8 @@ func newOAuth2Config(api string, scopes ...string) (*oauth2.Config, error) {
 	return google.ConfigFromJSON(oauthConfigData, scopes...)
 }
 
+// NewClient creates a new http.Client that will authorize calls with the token
+// stored for the given API name.
 func NewClient(ctx context.Context, api string, scopes ...string) (c *http.Client, err error) {
 	config, err := newOAuth2Config(api, scopes...)
 	if err != nil {
@@ -52,6 +54,8 @@ func tokenCacheFileName(api string) string {
 	return "."
 }
 
+// SaveTokenToCache saves the given oauth2.Token to the cache file. It returns
+// an error if the cache file cannot be written.
 func SaveTokenToCache(api string, token *oauth2.Token) error {
 	filename := tokenCacheFileName(api)
 	f, err := os.Create(filename)
@@ -62,6 +66,9 @@ func SaveTokenToCache(api string, token *oauth2.Token) error {
 	return gob.NewEncoder(f).Encode(token)
 }
 
+// LoadTokenFromCache reads the cache file for the provided API and returns a
+// parsed oauth2.Token pointer, or an error if either the file cannot be read or
+// the token is invalid.
 func LoadTokenFromCache(api string) (*oauth2.Token, error) {
 	filename := tokenCacheFileName(api)
 	f, err := os.Open(filename)
@@ -71,4 +78,13 @@ func LoadTokenFromCache(api string) (*oauth2.Token, error) {
 	t := new(oauth2.Token)
 	err = gob.NewDecoder(f).Decode(t)
 	return t, err
+}
+
+// RemoveTokenFromCache will remove the cache file for the provided API. Future
+// requests using that api name will require re-authentication.
+func RemoveTokenFromCache(api string) error {
+	if err := os.Remove(tokenCacheFileName(api)); err != nil {
+		return err
+	}
+	return nil
 }
