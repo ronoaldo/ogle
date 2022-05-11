@@ -1,6 +1,9 @@
 # ogle is a toolkit to interact with Google APIs
 
-Warning: this is a work in progress, subject to change.
+[![Go Reference](https://pkg.go.dev/badge/github.com/ronoaldo/ogle.svg)](https://pkg.go.dev/github.com/ronoaldo/ogle)
+
+**Warning: this is a work in progress, subject to change.**
+
 
 # Install
 
