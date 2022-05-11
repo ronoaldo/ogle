@@ -8,12 +8,14 @@
 # Install
 
 To install these tools you need the Go programming language, version 1.16 or
-later, in your machine. Follow the setup instructions from the (official
-website)[https://go.dev/doc/install]
+later, in your machine. Follow the setup instructions from the [official
+website](https://go.dev/doc/install)
 
 Once Go is installed, you can then install the commands by running:
 
-go install github.com/ronoaldo/ogle/cmd/...
+```bash
+go install github.com/ronoaldo/ogle/cmd/...@latest
+```
 
 # Commands
 
