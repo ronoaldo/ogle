@@ -1,4 +1,3 @@
-// package ogle provides some helper functions to work with Google APIs
 package ogle
 
 import (
@@ -22,8 +21,12 @@ func newOAuth2Config(api string, scopes ...string) (*oauth2.Config, error) {
 	return google.ConfigFromJSON(oauthConfigData, scopes...)
 }
 
-// NewClient creates a new http.Client that will authorize calls with the token
-// stored for the given API name.
+// NewClient creates a new http.Client that will authorizes calls with the token
+// stored for the given API name in the cache file.
+//
+// NewClient is designed to provide a valid token when called, for convenience.
+// This implies that if there is no cached credentials, it will start an OAuth2
+// flow by calling Authorize.
 func NewClient(ctx context.Context, api string, scopes ...string) (c *http.Client, err error) {
 	config, err := newOAuth2Config(api, scopes...)
 	if err != nil {

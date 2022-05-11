@@ -1,30 +1,23 @@
-# Simple toolkit to interact with Google APIs
+# ogle is a toolkit to interact with Google APIs
 
 Warning: this is a work in progress, subject to change.
 
 # Install
 
-To install these tools you need the Go programming language
-in your machine. Follow the setup instructions from the
-(official website)[https://go.dev/doc/install]
+To install these tools you need the Go programming language, version 1.16 or
+later, in your machine. Follow the setup instructions from the (official
+website)[https://go.dev/doc/install]
 
-If you have Debian/Ubuntu you can also run:
+Once Go is installed, you can then install the commands by running:
 
-	apt-get install golang-go
-
-Once Go is installed, you can then install the commands
-by running:
-
-	go install github.com/ronoaldo/ogle/cmd/...
+go install github.com/ronoaldo/ogle/cmd/...
 
 # Commands
 
-Each command is designed to be used as a standalone command
-line tool, and be integrated with any Unix toolchain.
+Each command is designed to be used as a standalone command line tool, and be
+integrated with any Unix toolchain.
 
 ## youtube
 
-youtube is a command line interface to interact with your
-youtube channel.
-
-For usage run `youtube --help`
+`youtube` is a command line interface to interact with your Youtube channel.  It
+allows you to list your channel details, playlists, playlist vídeos.

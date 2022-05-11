@@ -1,3 +1,10 @@
+// Command youtube allows you to interact with the Youtube service using a
+// command line interface.
+//
+// See all the available options from the tool integrated help menu:
+//
+//     youtube --help
+//
 package main
 
 import (

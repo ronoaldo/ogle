@@ -13,9 +13,9 @@ import (
 )
 
 // Authorized launches the OAuth2 flow, by listening to a random port on
-// localhost. It returns the granted oauth2.Token or an error if there is any
-// errors during the process, including the user not authorizing the client at
-// all.
+// localhost. It returns the granted oauth2.Token if the flow completes
+// sucessfully.  It will report any error during the process, including the user
+// not authorizing the client at all or an error during the token exchange.
 func Authorize(ctx context.Context, config *oauth2.Config) (*oauth2.Token, error) {
 	// 1. Listen to random local port
 	l, err := net.Listen("tcp", ":0")
