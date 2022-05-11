@@ -1,11 +1,11 @@
 {
   "installed": {
-    "client_id": "859422077908-3aniavc550n4ojlrtoeseq7ka0m0b8fd.apps.googleusercontent.com",
-    "project_id": "commonwebservices",
+    "client_id": "740018203737-end8de430jac5jmk8l0nl7vblk1tqnoe.apps.googleusercontent.com",
+    "project_id": "ogle-api-client",
     "auth_uri": "https://accounts.google.com/o/oauth2/auth",
     "token_uri": "https://oauth2.googleapis.com/token",
     "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_secret": "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",
+    "client_secret": "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",
     "redirect_uris": [
       "http://localhost"
     ]
