@@ -2,11 +2,13 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"log"
+	"os"
+	"strings"
+
 	"github.com/ronoaldo/ogle"
 	"golang.org/x/net/context"
 	"google.golang.org/api/youtube/v3"
-	"log"
 )
 
 var (
@@ -44,9 +46,13 @@ func listSubscribers(yt *youtube.Service) {
 	nextPageToken := ""
 	itemsPerPage := 50
 	page := 1
+	count := 0
+	w := ogle.NewTabWriter(os.Stdout)
+	defer w.Flush()
+	w.Println("", "NAME", "CHANNEL_ID", "DESCRIPTION")
 	for {
 		resp, err := yt.Subscriptions.
-			List("subscriberSnippet").
+			List([]string{"subscriberSnippet"}).
 			MySubscribers(true).
 			PageToken(nextPageToken).
 			Order("alphabetical").
@@ -56,9 +62,11 @@ func listSubscribers(yt *youtube.Service) {
 			log.Fatal(err)
 		}
 		for i := range resp.Items {
-			sub := resp.Items[i]
-			if sub.SubscriberSnippet != nil {
-				fmt.Printf("%s,%s\n", sub.SubscriberSnippet.ChannelId, sub.SubscriberSnippet.Title)
+			sub := resp.Items[i].SubscriberSnippet
+			count++
+			if sub != nil {
+				desc := substr(sub.Description, 0, 40)
+				w.Println(count, sub.Title, sub.ChannelId, strings.Split(desc, "\n")[0])
 			}
 		}
 		nextPageToken = resp.NextPageToken
@@ -67,4 +75,28 @@ func listSubscribers(yt *youtube.Service) {
 		}
 		page++
 	}
+}
+
+// From: https://go.dev/play/p/SWY4Lu5Ano5
+func substr(s string, from, length int) string {
+	//create array like string view
+	wb := []string{}
+	wb = strings.Split(s, "")
+
+	//miss nil pointer error
+	to := from + length
+
+	if to > len(wb) {
+		to = len(wb)
+	}
+
+	if from > len(wb) {
+		from = len(wb)
+	}
+
+	out := strings.Join(wb[from:to], "")
+	if s == out {
+		return s
+	}
+	return out + "..."
 }

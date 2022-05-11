@@ -6,7 +6,7 @@ Warning: this is a work in progress, subject to change.
 
 To install these tools you need the Go programming language
 in your machine. Follow the setup instructions from the
-official website https://golang.org/doc/install
+(official website)[https://go.dev/doc/install]
 
 If you have Debian/Ubuntu you can also run:
 
