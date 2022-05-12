@@ -1,10 +1,30 @@
 // Command youtube allows you to interact with the Youtube service using a
 // command line interface.
 //
-// See all the available options from the tool integrated help menu:
+// Check the updated help with `youtube --help`:
 //
-//     youtube --help
+//     Usage of youtube:
+//       -channel channel_id
+//             The channel_id id to use.
+//       -cmd command
+//             The command to execute. Use -cmd="list" to show all commands. (default "list")
+//       -playlist playlist_id
+//             The playlist_id to use.
 //
+//     Valid commands for -cmd are:
+//
+//     For channels:
+//             channels                list channels
+//             subscribers             list subscribers
+//
+//     For playlists:
+//             playlists               list playlists
+//             playlist-items          list videos in playlist
+//             dedup-playlist          remove duplicate videos from playlist
+//
+//     Misc:
+//             list                    show this message
+//             logout                  revoke credentials
 package main
 
 import (
@@ -19,30 +39,30 @@ import (
 	"google.golang.org/api/youtube/v3"
 )
 
-const (
-	itemsPerPage int64 = 50
-)
-
+// Command line options
 var (
 	command  string
 	playlist string
 	channel  string
+)
 
-	w = ogle.NewTabWriter(os.Stdout)
+// Globals
+var (
+	w   = ogle.NewTabWriter(os.Stdout)
+	ctx = context.Background()
 )
 
 func init() {
-	flag.StringVar(&command, "cmd", "channels",
-		"The `COMMAND` to execute. Use \"list\" to show all commands.")
+	flag.StringVar(&command, "cmd", "list",
+		"The `command` to execute. Use -cmd=\"list\" to show all commands.")
 	flag.StringVar(&playlist, "playlist", "",
-		"The `PLAYLIST` to use.")
+		"The `playlist_id` to use.")
 	flag.StringVar(&channel, "channel", "",
-		"The `CHANNELID` id to use.")
+		"The `channel_id` id to use.")
 }
 
 func main() {
 	flag.Parse()
-	ctx := context.Background()
 
 	client, err := ogle.NewClient(ctx, "youtube", youtube.YoutubeScope)
 	if err != nil {
@@ -57,50 +77,61 @@ func main() {
 	switch command {
 	case "channels":
 		listChannels(yt)
-	case "subscribers":
+	case "subscribers", "subs":
 		listSubscribers(yt)
 	case "playlists":
 		listPlaylists(yt)
-	case "playlist-videos":
+	case "playlist-videos", "playlist-items":
 		listPlaylistVideos(yt)
-	case "reauth":
-		reauth()
-
+	case "dedup-playlist":
+		removeDuplicatesFromPlaylist(yt)
+	case "reauth", "logout":
+		logout()
 	case "list":
-		cmdList := `
-Valid commands are:
-	channels		list channels
-	subscribers		list subscribers
-	playlists		list playlists
-	playlist-videos	list videos in playlist
-	reauth			revoke credentials
-`
-		fmt.Fprintf(os.Stdout, cmdList)
+		listCommands()
 	default:
 		flag.Usage()
 	}
 }
 
+var cmdList = `
+Valid commands for -cmd are:
+
+For channels:
+	channels		list channels
+	subscribers		list subscribers
+
+For playlists:
+	playlists		list playlists
+	playlist-items		list videos in playlist
+	dedup-playlist		remove duplicate videos from playlist
+
+Misc:
+	list			show this message
+	logout			revoke credentials
+`
+
+func listCommands() {
+	flag.Usage()
+	fmt.Fprintf(os.Stdout, cmdList)
+}
+
 func listChannels(yt *youtube.Service) {
-	nextPageToken := ""
 	count := 0
 	w.Println("#", "ID", "NAME", "LANGUAGE", "URL", "SUBSCRIBERS", "VIDEOS", "VIEWS")
 	defer w.Flush()
-	for {
-		resp, err := yt.Channels.List([]string{"id,snippet,statistics"}).Mine(true).
-			PageToken(nextPageToken).MaxResults(itemsPerPage).Do()
-		if err != nil {
-			log.Fatal(err)
-		}
+	req := yt.Channels.List([]string{"id,snippet,statistics"}).Mine(true)
+	err := req.Pages(ctx, func(resp *youtube.ChannelListResponse) error {
 		for i := range resp.Items {
 			ch := resp.Items[i]
 			count++
 			w.Println(count, ch.Id, ch.Snippet.Title, ch.Snippet.DefaultLanguage, ch.Snippet.CustomUrl,
 				ch.Statistics.SubscriberCount, ch.Statistics.VideoCount, ch.Statistics.ViewCount)
 		}
-		if nextPageToken = resp.NextPageToken; nextPageToken == "" {
-			break
-		}
+		return nil
+	})
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
@@ -173,7 +204,55 @@ func listPlaylistVideos(yt *youtube.Service) {
 	}
 }
 
-func reauth() {
+func removeDuplicatesFromPlaylist(yt *youtube.Service) {
+	type strTuple [2]string
+	itemID, videoID := 0, 1
+
+	if playlist == "" {
+		log.Fatal("You must specify a playlist with `-playlist` argument.")
+	}
+	req := yt.PlaylistItems.List([]string{"id,contentDetails"}).PlaylistId(playlist)
+
+	videos := make([]strTuple, 0)
+	toRemove := make([]strTuple, 0, len(videos))
+	uniqueVids := make(map[string]strTuple, len(videos))
+
+	err := req.Pages(ctx, func(resp *youtube.PlaylistItemListResponse) error {
+		for _, item := range resp.Items {
+			v := strTuple{item.Id, item.ContentDetails.VideoId}
+			videos = append(videos, v)
+			if _, isDup := uniqueVids[v[videoID]]; isDup {
+				log.Printf("Duplicate video found with videoId=%v; itemId=%v", v[videoID], v[itemID])
+				toRemove = append(toRemove, v)
+				continue
+			}
+			uniqueVids[v[videoID]] = v
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(uniqueVids) != len(videos) {
+		log.Printf("Removing duplicates from playlistId=%v, will keep %d videos (down from %d)",
+			playlist, len(uniqueVids), len(videos))
+		for _, v := range toRemove {
+			id := v[itemID]
+			log.Printf("> Will remove playlistItem %s", id)
+			err := yt.PlaylistItems.Delete(id).Do()
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Printf("< Removed %v", id)
+		}
+		return
+	}
+
+	log.Println("Playlist has no duplicate videos", len(uniqueVids), len(videos))
+}
+
+func logout() {
 	if err := ogle.RemoveTokenFromCache("youtube"); err != nil {
 		log.Fatalf("Unable to remove authentication token: %v", err)
 	}
