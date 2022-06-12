@@ -109,6 +109,8 @@ func main() {
 		videoUpdate(yt)
 	case "lives":
 		listLives(yt)
+	case "live-update":
+		updateLive(yt)
 	case "reauth", "logout":
 		logout()
 	case "list", "help":
@@ -306,6 +308,36 @@ func listLives(yt *youtube.Service) {
 	}
 }
 
+func updateLive(yt *youtube.Service) {
+	if video == "" {
+		log.Fatal("No video_id provided. Use the -video flag to define what live we need to update.")
+	}
+
+	parts := []string{"id,snippet"}
+	req := yt.LiveBroadcasts.List(parts).Id(video)
+	resp, err := req.Do()
+	if err != nil {
+		log.Fatalf("Error loading live stream details: %v", err)
+	}
+	videoPayload := resp.Items[0]
+
+	msg := "Updated Fields: "
+	if videoTitle != "" {
+		videoPayload.Snippet.Title = videoTitle
+		msg = msg + "title "
+	}
+	if videoDescription != "" {
+		videoPayload.Snippet.Description = videoDescription
+		msg = msg + "description "
+	}
+	log.Printf("Updating live (id=%v). %v", video, msg)
+	_, err = yt.LiveBroadcasts.Update(parts, videoPayload).Do()
+	if err != nil {
+		log.Fatalf("Error updating live: %v", err)
+	}
+	log.Printf("Live updated")
+}
+
 func videoUpdate(yt *youtube.Service) {
 	if video == "" {
 		log.Fatal("No video_id provided. Use the -video flag to define what video we need to update.")
@@ -353,7 +385,6 @@ func videoUpdate(yt *youtube.Service) {
 		log.Fatalf("Error updating video: %v", err)
 	}
 	log.Println("Vídeo updated")
-	// dumpjson(updatedVideo)
 }
 
 func logout() {
